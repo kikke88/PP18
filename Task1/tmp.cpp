@@ -1,10 +1,12 @@
-    #include <iostream>
-    #include <chrono>
-    int main() {
-      auto begin = std::chrono::steady_clock::now();
-      getchar(); 
-      auto end = std::chrono::steady_clock::now();
-      
-      auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
-      std::cout << "The time: " << elapsed_ms.count() << " ms\n";
-    }
+#include <iostream>
+#include <utility>
+	
+std::pair<double, double> f(double r) {
+	return std::pair<double, double>(2 * r, r); 
+}
+
+int main() {
+  const auto [a, b] = f(6.55);
+
+  std::cout << a << std::endl << b << std::endl;
+}
