@@ -1,7 +1,6 @@
 set terminal png
-set output "graph.png"
 set xlabel "multiplication method"
 set ylabel "milliseconds"
+set xrange [-1:6]
 set key left top
 set xtics( "ijk" 0 , "ikj" 1, "kij" 2, "jik" 3, "jki" 4, "kji" 5)
-plot "result.txt" title "503 * 798 * 631" with linespoints lw 2 ps 2 pt 3 lt rgb 'blue'
