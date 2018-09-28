@@ -1,12 +1,13 @@
-COMPILE = g++-7 -std=c++1z
-basic = ./main ./tests/T1.dat ./tests/T2.dat 
+COMPILE = g++-8 -std=c++1z
+basic = ./main ./tests/T1.dat ./tests/T2.dat
+stat = ./main ./tests/A_stat_500.dat ./tests/B_stat_500.dat ./tests/tmp.dat
 .PHONY: all clean install uninstall
 all: print gen compare main
 #createtest:
 #	./gen d 503 798 ./tests/A.dat
 #	./gen d 798 631 ./tests/B.dat
 clean:
-	rm -rf gen print compare main tmp *.out *.o rex.txt ./tests/A*.* ./tests/B*.* ./tests/C*.* *.png result.txt *.png
+	rm -rf gen print compare main tmp *.out *.o rex.txt ./tests/A*.* ./tests/B*.* ./tests/C*.* *.png result.txt *.png tmp.dat avg.png
 result:
 	rm result.txt
 print: arrayprint.cpp
@@ -40,3 +41,28 @@ report:
 	./plot 300
 	./plot 500
 	./plot 1000
+graph_statistic:
+	g++-8 -std=c++1z -o avg averaging.cpp
+	./gen d 500 500 ./tests/A_stat_500.dat
+	./gen d 500 500 ./tests/B_stat_500.dat
+	touch statistic.txt
+
+	#loop = 1 ; while [[ $$loop -le 7 ]] ; do \
+	#	i = 0 ; while [[ $$i -le 5 ]] ; do \
+	#		$(stat) $$i >> statistic.txt ; \
+	#		((i = i + 1)) ; \
+	#	done ; \
+	#	((loop = loop + 1)) ; \
+	#done
+	for i in 1 2 3 4 5 6 7 ; do \
+		for j in 0 1 2 3 4 5 ; do \
+			$(stat) $$j >> statistic.txt ; \
+		done; \
+	done 
+	rm ./tests/tmp.dat
+	cat statistic.txt
+	./avg statistic.txt
+	gnuplot plotsettings.txt -e "set output 'avg.png';plot \"statistic.txt\" title \"500 * 500 * 500\" with linespoints lw 2 ps 2 pt 3 lt rgb 'blue'"
+	rm statistic.txt
+	rm ./avg
+	subl avg.png

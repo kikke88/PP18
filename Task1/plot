@@ -3,7 +3,9 @@ way="./main ./tests/A$1.dat ./tests/B$1.dat"
 options="\"result.txt\" title \"$1 * $1 * $1\" with linespoints lw 2 ps 2 pt 3 lt rgb 'blue'"
 ./gen d $1 $1 ./tests/A$1.dat
 ./gen d $1 $1 ./tests/B$1.dat
-rm ./result.txt
+if [ -f "./result.txt" ]; then
+	rm ./result.txt
+fi
 for (( i=0; i < 6; i++ ))
 do
 $way ./tests/C$1.dat $i >> result.txt
