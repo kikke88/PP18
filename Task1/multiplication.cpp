@@ -22,7 +22,6 @@ void multiplication(const std::vector<std::vector<Type>>& A, const std::vector<s
 				}
 				auto end = std::chrono::steady_clock::now();
 				auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
-	      		//std::cout << "ijk" << "\t"<< elapsed_ms.count() << std::endl;
 	      		std::cout << "0" << "\t"<< elapsed_ms.count() << std::endl;
       		}
 			break;
@@ -38,7 +37,6 @@ void multiplication(const std::vector<std::vector<Type>>& A, const std::vector<s
 				}
 				auto end = std::chrono::steady_clock::now();
 				auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
-	      		//std::cout << "ikj" << "\t"<< elapsed_ms.count() << std::endl;
 	      		std::cout << "1" << "\t"<< elapsed_ms.count() << std::endl;
       		}
 			break;
@@ -54,7 +52,6 @@ void multiplication(const std::vector<std::vector<Type>>& A, const std::vector<s
 				}
 				auto end = std::chrono::steady_clock::now();
 				auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
-	      		//std::cout << "kij" << "\t"<< elapsed_ms.count() << std::endl;
 	      		std::cout << "2" << "\t"<< elapsed_ms.count() << std::endl;
       		}
 			break;
@@ -70,7 +67,6 @@ void multiplication(const std::vector<std::vector<Type>>& A, const std::vector<s
 				}
 				auto end = std::chrono::steady_clock::now();
 				auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
-	      		//std::cout << "jik" << "\t"<< elapsed_ms.count() << std::endl;
 	      		std::cout << "3" << "\t"<< elapsed_ms.count() << std::endl;
 			}
 			break;
@@ -86,7 +82,6 @@ void multiplication(const std::vector<std::vector<Type>>& A, const std::vector<s
 				}
 				auto end = std::chrono::steady_clock::now();
 				auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
-	      		//std::cout << "jki" << "\t"<< elapsed_ms.count() << std::endl;
 	      		std::cout << "4" << "\t"<< elapsed_ms.count() << std::endl;
       		}
 			break;
@@ -102,7 +97,6 @@ void multiplication(const std::vector<std::vector<Type>>& A, const std::vector<s
 				}
 				auto end = std::chrono::steady_clock::now();
 				auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
-	      		//std::cout << "kji" << "\t"<< elapsed_ms.count() << std::endl;
       			std::cout << "5" << "\t"<< elapsed_ms.count() << std::endl;
       		}
 			break;

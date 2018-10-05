@@ -13,4 +13,4 @@ $way ./tests/C$1.dat $i >> result.txt
 done
 
 gnuplot plotsettings.txt -e "set output 'graph$1.png';plot $options"
-subl graph$1.png
+xdg-open graph$1.png
