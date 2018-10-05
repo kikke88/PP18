@@ -3,9 +3,6 @@ basic = ./main ./tests/T1.dat ./tests/T2.dat
 stat = ./main ./tests/A_stat_500.dat ./tests/B_stat_500.dat ./tests/tmp.dat
 .PHONY: all clean install uninstall
 all: print gen compare main
-#createtest:
-#	./gen d 503 798 ./tests/A.dat
-#	./gen d 798 631 ./tests/B.dat
 clean:
 	rm -rf gen print compare main tmp *.out *.o rex.txt ./tests/A*.* ./tests/B*.* ./tests/C*.* *.png result.txt *.png tmp.dat avg.png
 result:
@@ -20,7 +17,7 @@ main: multiplication.cpp
 	$(COMPILE) -o main multiplication.cpp
 tmp: tmp.cpp
 	$(COMPILE) -o tmp tmp.cppl
-test:
+test: main compare
 	$(basic) ./tests/C0.dat 0 > result.txt
 	$(basic) ./tests/C1.dat 1 >> result.txt
 	$(basic) ./tests/C2.dat 2 >> result.txt
@@ -34,19 +31,17 @@ test:
 	./compare ./tests/C4.dat ./tests/Result.dat
 	./compare ./tests/C5.dat ./tests/Result.dat
 	rm ./tests/C*.*
-
-report:
+report: gen main
 	./plot 50
 	./plot 200
 	./plot 300
 	./plot 500
 	./plot 1000
-graph_statistic:
+graph_statistic: gen main
 	g++-8 -std=c++1z -o avg averaging.cpp
 	./gen d 500 500 ./tests/A_stat_500.dat
 	./gen d 500 500 ./tests/B_stat_500.dat
 	touch statistic.txt
-
 	#loop = 1 ; while [[ $$loop -le 7 ]] ; do \
 	#	i = 0 ; while [[ $$i -le 5 ]] ; do \
 	#		$(stat) $$i >> statistic.txt ; \
@@ -60,7 +55,7 @@ graph_statistic:
 		done; \
 	done 
 	rm ./tests/tmp.dat
-	cat statistic.txt
+	rm ./tests/*_stat_500.dat
 	./avg statistic.txt
 	gnuplot plotsettings.txt -e "set output 'avg.png';plot \"statistic.txt\" title \"500 * 500 * 500\" with linespoints lw 2 ps 2 pt 3 lt rgb 'blue'"
 	rm statistic.txt
