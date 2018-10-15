@@ -15,5 +15,4 @@ create_tests:
 		./generate_array tests/A_$$i.dat  $$i ; \
 		./generate_array tests/B_$$i.dat  $$i ; \
 	done;
-mode1:
 	
