@@ -12,31 +12,48 @@ void handle_error (int retval)
     exit(1);
 }
 
-//мб вообще не надо использовать массов С
+void C_reset(int size, std::vector<std::vector<float>>& C){
+	for (std::size_t i {0}; i < size; ++i) {
+		for (std::size_t j {0}; j < size; ++j) {
+			C[i][j] = 0;
+		}
+	}
+}
+
 void mul(std::size_t size, std::vector<std::vector<float>>& A, std::vector<std::vector<float>>& B, int counter_num)
 {
 	std::size_t block_size;
+	int retval;
+	std::string ofile1_name;
+	std::string ofile2_name;
 	std::vector<std::vector<float>> C(size, std::vector<float>(size, 0));//
 	if (counter_num == 0 or counter_num == 1) {
-		int first_group_of_events[4] {PAPI_TOT_CYC, PAPI_TLB_TL, PAPI_L1_TCM, PAPI_L2_TCM};
-		long long values[NUM_EVENTS];
-		int Events[NUM_EVENTS];
 		std::string first_event, second_event;
 		if (counter_num == 0) {
+			ofile1_name = "results/cpu_cycles.txt";
+			ofile2_name = "results/l1_misses.txt";
 			first_event = "CPU cycles";
-			Events[0] = first_group_of_events[0];
-			second_event = "Total translation lookaside buffer misses";
-			Events[1] = first_group_of_events[1];
+			second_event = "Level 1 cache misses";
 		} else {
-			first_event = "Level 1 cache misses";
-			Events[0] = first_group_of_events[2];
+			ofile1_name = "results/total_tlm_misses.txt";
+			ofile2_name = "results/l2_misses.txt";
+			first_event = "Total translation lookaside buffer misses";
 			second_event = "Level 2 cache misses";
-			Events[1] = first_group_of_events[3];
 		}
-		std::cout << first_event << "\t" << second_event << std::endl;;
+		std::ofstream ofile1 (ofile1_name, std::ios_base::app);
+		std::ofstream ofile2 (ofile2_name, std::ios_base::app);
+		int first_group_of_events[4] {PAPI_TOT_CYC, PAPI_TLB_TL, PAPI_L1_TCM, PAPI_L2_TCM};
+		long long values[NUM_EVENTS];
+		int Events[NUM_EVENTS];		
+		Events[0] = first_group_of_events[counter_num];
+		Events[1] = first_group_of_events[counter_num + 2];
+		//std::cout << first_event << "\t" << second_event << std::endl;;
+		
 		//32*32 ijk
 		block_size = 32;
-		PAPI_start_counters(Events, NUM_EVENTS);
+		if ((retval = PAPI_start_counters(Events, NUM_EVENTS)) != PAPI_OK) {
+			handle_error(retval);
+		}
 		for (std::size_t i {0}; i < size; i+= block_size) {
 			for (std::size_t j {0}; j < size; j += block_size) {
 				for (std::size_t k {0}; k < size; k += block_size) {
@@ -50,12 +67,19 @@ void mul(std::size_t size, std::vector<std::vector<float>>& A, std::vector<std::
 				}
 			}
 		}
-		PAPI_stop_counters(values, NUM_EVENTS);
-		std::cout << values[0] << "\t" << values[1] << "\t" << " - ijk 32*32" << std::endl;
+		if ((retval = PAPI_stop_counters(values, NUM_EVENTS)) != PAPI_OK) {
+			handle_error(retval);
+		}
+		C_reset(size, C);
+		//std::cout << values[0] << "\t" << values[1] << "\t" << " - ijk 32*32" << std::endl;
+		ofile1 << values[0] << "\t";
+		ofile2 << values[1] << "\t";
 		
 		//32*32 ikj
 		block_size = 32;
-		PAPI_start_counters(Events, NUM_EVENTS);
+		if ((retval = PAPI_start_counters(Events, NUM_EVENTS)) != PAPI_OK) {
+			handle_error(retval);
+		}
 		for (std::size_t i {0}; i < size; i+= block_size) {
 			for (std::size_t k {0}; k < size; k += block_size) {
 				for (std::size_t j {0}; j < size; j += block_size) {
@@ -69,18 +93,28 @@ void mul(std::size_t size, std::vector<std::vector<float>>& A, std::vector<std::
 				}
 			}
 		}
-		PAPI_stop_counters(values, NUM_EVENTS);
-		std::cout << values[0] << "\t" << values[1] << "\t" << " - ikj 32*32" << std::endl;
-		
+		if ((retval = PAPI_stop_counters(values, NUM_EVENTS)) != PAPI_OK) {
+			handle_error(retval);
+		}
+		C_reset(size, C);
+		//std::cout << values[0] << "\t" << values[1] << "\t" << " - ikj 32*32" << std::endl;
+		ofile1 << values[0] << "\t";
+		ofile2 << values[1] << "\t";
+
 		//b*b ikj
-		//3 * b * b = 256 * 1024 / 16 (L2)  ~73.9
-		//3 * b * b = 32 * 1024 / 16 (L1) ~26.1
- 		if (counter_num == 1) {//L1 cache misses
- 			block_size = 24;
- 		} else {/////////////////////////////////////////////////////////////////////////разделить в два разных L1 i L2
- 			block_size = 72;
+		//3 * b * b = 256 * 1024 / 4 (L2)  b~147.8
+		//3 * b * b = 32 * 1024 / 4 (L1) b~52.25
+		block_size = 48;
+/*
+ 		if (counter_num == 0) {
+ 			block_size = 48;
+ 		} else {
+ 			block_size = 144;
  		}
-		PAPI_start_counters(Events, NUM_EVENTS);
+*/
+		if ((retval = PAPI_start_counters(Events, NUM_EVENTS)) != PAPI_OK) {
+			handle_error(retval);
+		}
 		for (std::size_t i {0}; i < size; i+= block_size) {
 			for (std::size_t k {0}; k < size; k += block_size) {
 				for (std::size_t j {0}; j < size; j += block_size) {
@@ -94,15 +128,26 @@ void mul(std::size_t size, std::vector<std::vector<float>>& A, std::vector<std::
 				}
 			}
 		}
-		PAPI_stop_counters(values, NUM_EVENTS);
-		std::cout << values[0] << "\t" << values[1] << "\t" << " - ikj " << block_size << "*" << block_size << std::endl;
+		if ((retval = PAPI_stop_counters(values, NUM_EVENTS)) != PAPI_OK) {
+			handle_error(retval);
+		}
+		//std::cout << values[0] << "\t" << values[1] << "\t" << " - ikj " << block_size << "*" << block_size << std::endl;
+		ofile1 << values[0] << std::endl;
+		ofile2 << values[1] << std::endl;
 	} else {
-		std::cout << "Proc time" << "\t" << "MFLOP" << std::endl;
+		//std::cout << "Proc time" << "\t" << "MFLOP" << std::endl;
+		ofile1_name = "results/proc_time.txt";
+		ofile2_name = "results/mflops.txt";
+		std::ofstream ofile1 (ofile1_name, std::ios_base::app);
+		std::ofstream ofile2 (ofile2_name, std::ios_base::app);
 		float real_time, proc_time, mflops;
 		long long flpins;
+
 		//32*32 ijk
 		block_size = 32;
-		PAPI_flops(&real_time, &proc_time, &flpins, &mflops);
+		if ((retval = PAPI_flops(&real_time, &proc_time, &flpins, &mflops)) != PAPI_OK) {
+			handle_error(retval);
+		}
 		for (std::size_t i {0}; i < size; i+= block_size) {
 			for (std::size_t j {0}; j < size; j += block_size) {
 				for (std::size_t k {0}; k < size; k += block_size) {
@@ -116,13 +161,20 @@ void mul(std::size_t size, std::vector<std::vector<float>>& A, std::vector<std::
 				}
 			}
 		}
-		PAPI_flops(&real_time, &proc_time, &flpins, &mflops);
-		std::cout << proc_time << "\t" << mflops << "\t" << " - ijk 32*32" << std::endl;
+		if ((retval = PAPI_flops(&real_time, &proc_time, &flpins, &mflops)) != PAPI_OK) {
+			handle_error(retval);
+		}
 		PAPI_shutdown();
-
+		C_reset(size, C);
+		//std::cout << proc_time << "\t" << mflops << "\t" << " - ijk 32*32" << std::endl;
+		ofile1 << proc_time << "\t";
+		ofile2 << mflops << "\t";
+		
 		//32*32 ikj
 		block_size = 32;
-		PAPI_flops(&real_time, &proc_time, &flpins, &mflops);
+		if ((retval = PAPI_flops(&real_time, &proc_time, &flpins, &mflops)) != PAPI_OK) {
+			handle_error(retval);
+		}
 		for (std::size_t i {0}; i < size; i+= block_size) {
 			for (std::size_t k {0}; k < size; k += block_size) {
 				for (std::size_t j {0}; j < size; j += block_size) {
@@ -136,15 +188,23 @@ void mul(std::size_t size, std::vector<std::vector<float>>& A, std::vector<std::
 				}
 			}
 		}
-		PAPI_flops(&real_time, &proc_time, &flpins, &mflops);
-		std::cout << proc_time << "\t" << mflops << "\t" << " - ikj 32*32" << std::endl;
+		if ((retval = PAPI_flops(&real_time, &proc_time, &flpins, &mflops)) != PAPI_OK) {
+			handle_error(retval);
+		}
 		PAPI_shutdown();
+		C_reset(size, C);
+		//std::cout << proc_time << "\t" << mflops << "\t" << " - ikj 32*32" << std::endl;
+		ofile1 << proc_time << "\t";
+		ofile2 << mflops << "\t";
 
 		//b*b ikj
-		//3 * b * b = 256 * 1024 / 16 (L2)  ~73.9
-		//3 * b * b = 32 * 1024 / 16 (L1) ~26.1
- 		block_size = 72;
-		PAPI_flops(&real_time, &proc_time, &flpins, &mflops);
+		//3 * b * b = 256 * 1024 / 4 (L2)  b~147.8
+		//3 * b * b = 32 * 1024 / 4 (L1) b~52.25
+		//block_size = 144;
+ 		block_size = 48;
+		if ((retval = PAPI_flops(&real_time, &proc_time, &flpins, &mflops)) != PAPI_OK) {
+			handle_error(retval);
+		}
 		for (std::size_t i {0}; i < size; i+= block_size) {
 			for (std::size_t k {0}; k < size; k += block_size) {
 				for (std::size_t j {0}; j < size; j += block_size) {
@@ -158,9 +218,12 @@ void mul(std::size_t size, std::vector<std::vector<float>>& A, std::vector<std::
 				}
 			}
 		}
-		PAPI_flops(&real_time, &proc_time, &flpins, &mflops);
-		std::cout << proc_time << "\t" << mflops << " - ijk " << block_size << "*" << block_size << std::endl;
-
+		if ((retval = PAPI_flops(&real_time, &proc_time, &flpins, &mflops)) != PAPI_OK) {
+			handle_error(retval);
+		}
+		//std::cout << proc_time << "\t" << mflops << "\t" << " - ijk " << block_size << "*" << block_size << std::endl;
+		ofile1 << proc_time << std::endl;
+		ofile2 << mflops << std::endl;
 	}
 }
 /*
@@ -170,7 +233,6 @@ void mul(std::size_t size, std::vector<std::vector<float>>& A, std::vector<std::
 	PAPI_start(EventSet);
 	PAPI_stop(EventSet, values);
 */
-
 
 int main(int argc, char* argv[])
 {
@@ -196,8 +258,8 @@ int main(int argc, char* argv[])
 		}
 	}
 	std::cout << "Choose counter pair number:" << std::endl
-				<< "0 - CPU cycles / Total translation lookaside buffer misses" << std::endl
-				<< "1 - Level 1 cache misses / Level 2 cache misses" << std::endl
+				<< "0 - CPU cycles / Level 1 cache misses" << std::endl
+				<< "1 - Total translation lookaside buffer misses / Level 2 cache misses" << std::endl
 				<< "2 - Proc time / MFLOP" << std::endl;
 	int num;
 	std::cin >> num;
