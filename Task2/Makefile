@@ -9,9 +9,11 @@ array_multiplication:
 generate_array:
 	${CXX} -o generate_array gen_array.cpp
 clean:
-	rm -rf tests/* array_multiplication generate_array
+	rm -rf tests/* array_multiplication generate_array a.out tmp pmt results/*
 tmp:
 	${CXX} -I /usr/local/include/ -o tmp tmp.cpp ${NECESSARY_PAPI_FILE}
+pmt:
+	${CXX} -I /usr/local/include/ -o pmt pmt.cpp ${NECESSARY_PAPI_FILE}
 
 create_tests:
 #добавить 3000 4000 5000
