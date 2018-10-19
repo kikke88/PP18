@@ -3,7 +3,7 @@
 #include <vector>
 
 
-#define NUM_EVENTS 1
+#define NUM_EVENTS 3
 
 
 void handle_error (int retval)
@@ -16,7 +16,7 @@ void handle_error (int retval)
 int main() {
 	std::cout << PAPI_num_counters() << "/////////" << sizeof(float) << std::endl;
 	//PAPI_TOT_CYC, PAPI_TLB_TL, PAPI_L1_TCM, PAPI_L2_TCM
-	int Events[NUM_EVENTS] {PAPI_L1_TCM};//, PAPI_L2_TCM};
+	int Events[NUM_EVENTS] {PAPI_TOT_CYC, PAPI_L1_DCM, PAPI_L2_DCM};//, PAPI_L2_TCM};
 	long long values[NUM_EVENTS];
 	//int Events[NUM_EVENTS];
 	//float real_time, proc_time, mflops;
@@ -26,7 +26,7 @@ int main() {
 									B(size, std::vector<float>(size, 2)),
 									C(size, std::vector<float>(size, 0));
 	//PAPI_start_counters(Events, 2);
-	std::size_t block_size = 24;
+	std::size_t block_size = 48;
 	//PAPI_flops(&real_time, &proc_time, &flpins, &mflops);
 	int retval;
 	if ((retval= PAPI_start_counters(Events, NUM_EVENTS)) != PAPI_OK) {

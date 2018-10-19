@@ -1,0 +1,5 @@
+set terminal png
+set style data linespoints
+set xlabel "array size"
+set key fixed left top vertical Right noreverse enhanced autotitle box lt black linewidth 1.000 dashtype solid
+set title  font ",20" norotate

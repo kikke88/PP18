@@ -1,0 +1,25 @@
+	#rm -rf results/*
+	#for i in 0  ; do \
+	#	for j in 1000 ; do \
+	#		./array_multiplication tests/A_$$j.dat tests/B_$$j 1 0.dat ; \
+	#	done; \
+	#done
+	...
+		#for file in $(ls results}); do \
+	#	./special_representation results/$file results/$file_new ; \
+	#	gnuplot plot_settings.txt -e "set output '$file.png';splot \"results/$file_new.txt\" title \"$file\" with lines lw 2 " ; \
+	#done
+	#for file in $(ls results); do echo ${file}; done
+
+	#for folder in $(ls); do for file in $folder/*; do echo $file; done; done
+
+
+#splot 'pl' matrix using 1:2:3 w lines notitle
+#splot "qqqq.txt" with lines
+#set xlabel "mode"
+#set xlabel "array size"
+
+
+
+	polus
+	64 512
