@@ -12,7 +12,8 @@ void handle_error (int retval)
     exit(1);
 }
 
-void C_reset(int size, std::vector<std::vector<float>>& C){
+void C_reset(int size, float** C)
+{
 	for (std::size_t i {0}; i < size; ++i) {
 		for (std::size_t j {0}; j < size; ++j) {
 			C[i][j] = 0;
@@ -20,48 +21,13 @@ void C_reset(int size, std::vector<std::vector<float>>& C){
 	}
 }
 
-inline void for_for_for_func(std::size_t size, std::size_t block_size,
-						std::vector<std::vector<float>>& A, std::vector<std::vector<float>>& B,
-						std::vector<std::vector<float>>& C, bool ikj_flag)
-{
-	if (!ikj_flag) {
-		for (std::size_t i {0}; i < size; i+= block_size) {
-			for (std::size_t j {0}; j < size; j += block_size) {
-				for (std::size_t k {0}; k < size; k += block_size) {
-					for (std::size_t m {i}; m < i + block_size and m < size; ++m) {
-						for (std::size_t n {j}; n < j + block_size and n < size; ++n) {
-							for (std::size_t l {k}; l < k + block_size and l < size; ++l) {
-								C[m][n] += A[m][l] * B[l][n];
-							}
-						}
-					}
-				}
-			}
-		}	
-	} else {
-		for (std::size_t i {0}; i < size; i+= block_size) {
-			for (std::size_t k {0}; k < size; k += block_size) {
-				for (std::size_t j {0}; j < size; j += block_size) {
-					for (std::size_t m {i}; m < i + block_size and m < size; ++m) {
-						for (std::size_t l {k}; l < k + block_size and l < size; ++l) {
-							for (std::size_t n {j}; n < j + block_size and n < size; ++n) {
-								C[m][n] += A[m][l] * B[l][n];
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-}
-
-void mul(std::size_t size, std::vector<std::vector<float>>& A, std::vector<std::vector<float>>& B, int stat_flag, int counter_num)
+void mul(std::size_t size, float** A, float** B, float** C, int stat_flag, int counter_num)
 {
 	std::size_t block_size;
+	std::size_t i, j, k, m, n, l, m_min, n_min, l_min;
 	int retval;
 	std::string ofile1_name;
 	std::string ofile2_name;
-	std::vector<std::vector<float>> C(size, std::vector<float>(size, 0));
 	if (counter_num == 0) {
 		std::string first_event, second_event, third_event;
 		first_event = "CPU cycles";
@@ -84,7 +50,19 @@ void mul(std::size_t size, std::vector<std::vector<float>>& A, std::vector<std::
 		if ((retval = PAPI_start_counters(Events, NUM_EVENTS)) != PAPI_OK) {
 			handle_error(retval);
 		}
-		for_for_for_func(size, block_size, A, B, C, false);
+		for (i = 0; i < size; i += block_size) {
+			for (j = 0; j < size; j += block_size) {
+				for (k = 0; k < size; k += block_size) {
+					for (m = i, m_min = std::min(size, i + block_size); m < m_min; ++m) {
+						for (n = j, n_min = std::min(size, j + block_size); n < n_min; ++n) {
+							for (l = k, l_min = std::min(size, k + block_size); l < l_min; ++l) {
+								C[m][n] += A[m][l] * B[l][n];
+							}
+						}
+					}
+				}
+			}
+		}
 		if ((retval = PAPI_stop_counters(values, NUM_EVENTS)) != PAPI_OK) {
 			handle_error(retval);
 		}
@@ -105,7 +83,19 @@ void mul(std::size_t size, std::vector<std::vector<float>>& A, std::vector<std::
 		if ((retval = PAPI_start_counters(Events, NUM_EVENTS)) != PAPI_OK) {
 			handle_error(retval);
 		}
-		for_for_for_func(size, block_size, A, B, C, true);
+		for (i = 0; i < size; i += block_size) {
+			for (k = 0; k < size; k += block_size) {
+				for (j = 0; j < size; j += block_size) {
+					for (m = i, m_min = std::min(size, i + block_size); m < m_min; ++m) {
+						for (l = k, l_min = std::min(size, k + block_size); l < l_min; ++l) {
+							for (n = j, n_min = std::min(size, j + block_size); n < n_min; ++n) {
+								C[m][n] += A[m][l] * B[l][n];
+							}
+						}
+					}
+				}
+			}
+		}
 		if ((retval = PAPI_stop_counters(values, NUM_EVENTS)) != PAPI_OK) {
 			handle_error(retval);
 		}
@@ -120,18 +110,24 @@ void mul(std::size_t size, std::vector<std::vector<float>>& A, std::vector<std::
 			ofile2 << size << " " << values[1] << "\t";
 			ofile3 << size << " " << values[2] << "\t";
 		}
-
-		//b*b ikj
-		//3 * b * b = 256 * 1024 / 4 (L2)  b~147.8
-		//3 * b * b = 32 * 1024 / 4 (L1) b~52.25
-		//polus
-		//3 * b * b = 512 * 1024 / 4 (L2) b~209.0 b = 200
-		//-=-
-		block_size = 48;
+		//block_size = 70;polus
+		block_size = 50;
 		if ((retval = PAPI_start_counters(Events, NUM_EVENTS)) != PAPI_OK) {
 			handle_error(retval);
 		}
-		for_for_for_func(size, block_size, A, B, C, true);
+		for (i = 0; i < size; i += block_size) {
+			for (k = 0; k < size; k += block_size) {
+				for (j = 0; j < size; j += block_size) {
+					for (m = i, m_min = std::min(size, i + block_size); m < m_min; ++m) {
+						for (l = k, l_min = std::min(size, k + block_size); l < l_min; ++l) {
+							for (n = j, n_min = std::min(size, j + block_size); n < n_min; ++n) {
+								C[m][n] += A[m][l] * B[l][n];
+							}
+						}
+					}
+				}
+			}
+		}
 		if ((retval = PAPI_stop_counters(values, NUM_EVENTS)) != PAPI_OK) {
 			handle_error(retval);
 		}
@@ -141,9 +137,9 @@ void mul(std::size_t size, std::vector<std::vector<float>>& A, std::vector<std::
 						<< values[2] << "\t" 
 						<< " - ikj " << block_size << "*" << block_size << std::endl;
 		} else {
-			ofile1 << values[0] << std::endl;
-			ofile2 << values[1] << std::endl;	
-			ofile3 << values[2] << std::endl;
+			ofile1 << size << " " << values[0] << std::endl;
+			ofile2 << size << " " << values[1] << std::endl;	
+			ofile3 << size << " " << values[2] << std::endl;
 		}
 	} else {
 		if (!stat_flag) {
@@ -161,7 +157,19 @@ void mul(std::size_t size, std::vector<std::vector<float>>& A, std::vector<std::
 		if ((retval = PAPI_flops(&real_time, &proc_time, &flpins, &mflops)) != PAPI_OK) {
 			handle_error(retval);
 		}
-		for_for_for_func(size, block_size, A, B, C, false);
+		for (i = 0; i < size; i += block_size) {
+			for (j = 0; j < size; j += block_size) {
+				for (k = 0; k < size; k += block_size) {
+					for (m = i, m_min = std::min(size, i + block_size); m < m_min; ++m) {
+						for (n = j, n_min = std::min(size, j + block_size); n < n_min; ++n) {
+							for (l = k, l_min = std::min(size, k + block_size); l < l_min; ++l) {
+								C[m][n] += A[m][l] * B[l][n];
+							}
+						}
+					}
+				}
+			}
+		}
 		if ((retval = PAPI_flops(&real_time, &proc_time, &flpins, &mflops)) != PAPI_OK) {
 			handle_error(retval);
 		}
@@ -181,7 +189,19 @@ void mul(std::size_t size, std::vector<std::vector<float>>& A, std::vector<std::
 		if ((retval = PAPI_flops(&real_time, &proc_time, &flpins, &mflops)) != PAPI_OK) {
 			handle_error(retval);
 		}
-		for_for_for_func(size, block_size, A, B, C, true);
+		for (i = 0; i < size; i += block_size) {
+			for (k = 0; k < size; k += block_size) {
+				for (j = 0; j < size; j += block_size) {
+					for (m = i, m_min = std::min(size, i + block_size); m < m_min; ++m) {
+						for (l = k, l_min = std::min(size, k + block_size); l < l_min; ++l) {
+							for (n = j, n_min = std::min(size, j + block_size); n < n_min; ++n) {
+								C[m][n] += A[m][l] * B[l][n];
+							}
+						}
+					}
+				}
+			}
+		}
 		if ((retval = PAPI_flops(&real_time, &proc_time, &flpins, &mflops)) != PAPI_OK) {
 			handle_error(retval);
 		}
@@ -195,18 +215,24 @@ void mul(std::size_t size, std::vector<std::vector<float>>& A, std::vector<std::
 			ofile1 << size << " " << proc_time << "\t";
 			ofile2 << size << " " << mflops << "\t";	
 		}
-
-		//b*b ikj
-		//3 * b * b = 256 * 1024 / 4 (L2)  b~147.8
-		//3 * b * b = 32 * 1024 / 4 (L1) b~52.25
-		//polus
-		//3 * b * b = 512 * 1024 / 4 (L2) b~209.0 b = 200
-		//-=-
- 		block_size = 48;
+ 		//block_size = 70; polus
+ 		block_size = 50;
 		if ((retval = PAPI_flops(&real_time, &proc_time, &flpins, &mflops)) != PAPI_OK) {
 			handle_error(retval);
 		}
-		for_for_for_func(size, block_size, A, B, C, true);
+		for (i = 0; i < size; i += block_size) {
+			for (k = 0; k < size; k += block_size) {
+				for (j = 0; j < size; j += block_size) {
+					for (m = i, m_min = std::min(size, i + block_size); m < m_min; ++m) {
+						for (l = k, l_min = std::min(size, k + block_size); l < l_min; ++l) {
+							for (n = j, n_min = std::min(size, j + block_size); n < n_min; ++n) {
+								C[m][n] += A[m][l] * B[l][n];
+							}
+						}
+					}
+				}
+			}
+		}
 		if ((retval = PAPI_flops(&real_time, &proc_time, &flpins, &mflops)) != PAPI_OK) {
 			handle_error(retval);
 		}
@@ -233,8 +259,22 @@ int main(int argc, char* argv[])
 	arrB.read((char*)& size, sizeof size);
 	arrA.read((char*)& size, sizeof size);
 	arrB.read((char*)& size, sizeof size);
-	std::vector<std::vector<float>> A(size, std::vector<float>(size, 0)),
-									B(size, std::vector<float>(size, 0));
+
+	//std::vector<std::vector<float>> A(size, std::vector<float>(size, 0)),
+	//								B(size, std::vector<float>(size, 0));
+	float** A = new float* [size];
+	for(int i = 0; i < size; ++i) {
+		A[i] = new float [size];
+	}
+	float** B = new float* [size];
+	for(int i = 0; i < size; ++i) {
+		B[i] = new float [size];
+	}
+	float** C = new float* [size];
+	for(int i = 0; i < size; ++i) {
+		C[i] = new float [size];
+	}
+
 	float tmp;
 	for (std::size_t i {0}; i < size; ++i) {
 		for (std::size_t j {0}; j < size; ++j) {
@@ -242,8 +282,11 @@ int main(int argc, char* argv[])
 			A[i][j] = tmp;
 			arrB.read((char*)& tmp, sizeof tmp);
 			B[i][j] = tmp;
+			C[i][j] = 0;
 		}
 	}
+	arrA.close();
+	arrB.close();
 	int stat_flag {std::atoi(argv[3])};
 	if (!stat_flag) {
 		std::cout << "Choose counter set:" << std::endl
@@ -256,6 +299,14 @@ int main(int argc, char* argv[])
 	} else {
 		std::cin >> pair_num;
 	}
-	mul(size, A, B, stat_flag, pair_num);
+	mul(size, A, B, C, stat_flag, pair_num);
+	for (std::size_t i {0}; i < size; ++i) {
+    	delete[] A[i];
+    	delete[] B[i];
+    	delete[] C[i];
+    }
+    delete [] A;
+    delete [] B;
+    delete [] C;
 	return 0;
 }
