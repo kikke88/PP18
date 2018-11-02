@@ -1,0 +1,13 @@
+set xlabel 'MPI processes'
+set ylabel 'Time'
+set key fixed left top vertical Right noreverse enhanced autotitle box lt black linewidth 1.000 dashtype solid
+set grid
+set terminal png
+set output 'Polus_max_time.png'
+plot 'polus' u 1:3 w lp pt 7 lt 1 title 'Polus, max time'
+set output 'Polus_total_time.png'
+plot 'polus' u 1:2 w lp pt 7 lt 1 title 'Polus, total time'
+set output 'Bluegene_max_time.png'
+plot 'bluegene' u 1:3 w lp pt 7 lt 1 title 'Bluegene, max time'
+set output 'Bluegene_total_time.png'
+plot 'bluegene' u 1:2 w lp pt 7 lt 1 title 'Bluegene, total time'

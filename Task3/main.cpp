@@ -51,7 +51,7 @@ int main(int argc, char* argv[])
 		int prime_numbers_counter = 0;
 		if (l_border < sqrt_from_r_border + 1) {//   ------A----sqrt(B)+1------
 			int tmp_index = prime_before_sqrt_arr_size - 1;
-			while(prime_before_sqrt[tmp_index] >= l_border) {
+			while (tmp_index >= 0 and prime_before_sqrt[tmp_index] >= l_border) {
 				ofile << prime_before_sqrt[tmp_index] << std::endl;
 				--tmp_index;
 				++prime_numbers_counter;
@@ -70,20 +70,21 @@ int main(int argc, char* argv[])
 			}
 		}
 		my_time += MPI_Wtime();
-	// 	total_time += my_time;
- // *		if (my_time > max_time) {
- // *			max_time = my_time;
- // *		}
- // *		double i_time;
- // *		for (int i = 1; i < size; ++i) {
- // *			MPI_Recv(&i_time, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &status);
- // *			if (i_time > max_time) {
- // *				max_time = i_time;
- // *			}
- // 			total_time += i_time;
- // 		}
-		
+/*		total_time += my_time;
+ 		if (my_time > max_time) {
+ 			max_time = my_time;
+ 		}
+ 		double i_time;
+ 		for (int i = 1; i < size; ++i) {
+ 			MPI_Recv(&i_time, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &status);
+ 			if (i_time > max_time) {
+ 				max_time = i_time;
+ 			}
+ 			total_time += i_time;
+ 		}
+*/	
 		std::cout << rank << "   " << my_time << std::endl;
+		std::cout << "total prime numbers - " << prime_numbers_counter << std::endl;
 	} else {
 		for (int i = 0; i < buf_size; ++i) {
 			buf[i] = -1;
