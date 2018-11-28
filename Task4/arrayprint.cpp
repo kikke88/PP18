@@ -6,8 +6,8 @@ void print_array(const std::size_t N, const std::size_t M, const char type, std:
 	std::cout << N << " * " << M << std::endl;
 	if (type == 'f') {
 		float tmp;
-		for (std::size_t i {0}; i < N; ++i) {
-			for (std::size_t j {0}; j < M; ++j) {
+		for (std::size_t i = 0; i < N; ++i) {
+			for (std::size_t j = 0; j < M; ++j) {
 				file.read((char*)& tmp, sizeof tmp);
 				std::cout << tmp << "  ";
 			}
@@ -15,8 +15,8 @@ void print_array(const std::size_t N, const std::size_t M, const char type, std:
 		}	
 	} else {
 		double tmp;
-		for (std::size_t i {0}; i < N; ++i) {
-			for (std::size_t j {0}; j < M; ++j) {
+		for (std::size_t i = 0; i < N; ++i) {
+			for (std::size_t j = 0; j < M; ++j) {
 				file.read((char*)& tmp, sizeof tmp);
 				std::cout << tmp << "  ";
 			}

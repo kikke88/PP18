@@ -32,11 +32,11 @@ int main(int argc, char* argv[])//A, b, c
 		std::fseek(b, shift, SEEK_SET);
 		std::fread(array_b, sizeof (double), columns, b);
 		std::fclose(b);
-		time -= MPI_Wtime();
 		double* i_result = new double [delta];
 		for (std::size_t i = 0; i < delta; ++i) {
 			i_result[i] = 0;
 		}
+		time -= MPI_Wtime();
 		for (std::size_t i = 0; i < delta; ++i) {
 			for (std::size_t j = 0; j < columns; ++j) {
 				i_result[i] += array_A[i][j] * array_b[j];
@@ -44,14 +44,26 @@ int main(int argc, char* argv[])//A, b, c
 		}
 		time += MPI_Wtime();
 		if (!rank) {
-			double* result = new double [lines];
-			int* recvcounts = new int [size];
-			int* displs = new int [size];
-			for (std::size_t i = 0; i < size; ++i) {
-				recvcounts[i] = (lines * (i + 1) / size - lines * i / size);
-				displs[i] = lines * i / size;
+			double* result = new double [lines];	
+			if (!(lines % size)) {
+				MPI_Barrier(MPI_COMM_WORLD);
+				time -= MPI_Wtime();
+				MPI_Gather(i_result, delta, MPI_DOUBLE, result, lines, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+				time += MPI_Wtime();
+			} else {
+				int* recvcounts = new int [size];
+				int* displs = new int [size];
+				for (std::size_t i = 0; i < size; ++i) {
+					recvcounts[i] = (lines * (i + 1) / size - lines * i / size);
+					displs[i] = lines * i / size;
+				}
+				MPI_Barrier(MPI_COMM_WORLD);
+				time -= MPI_Wtime();
+				MPI_Gatherv(i_result, delta, MPI_DOUBLE, result, recvcounts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+				time += MPI_Wtime();
+				delete recvcounts;
+				delete displs;
 			}
-			MPI_Gatherv(i_result, delta, MPI_DOUBLE, result, recvcounts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 			std::FILE* c = std::fopen(argv[3], "wb");
 			std::fwrite(&type, sizeof type, 1, c);
 			std::size_t tmp_size = lines;
@@ -61,10 +73,18 @@ int main(int argc, char* argv[])//A, b, c
 			std::fwrite(&result, sizeof (double), lines, c);
 			std::fclose(c);
 			delete result;
-			delete recvcounts;
-			delete displs;
 		} else {
-			MPI_Gatherv(i_result, delta, MPI_DOUBLE, NULL, NULL, NULL, MPI_DOUBLE, 0, MPI_COMM_WORLD);			
+			if(!(lines % size)) {
+				MPI_Barrier(MPI_COMM_WORLD);
+				time -= MPI_Wtime();
+				MPI_Gather(i_result, delta, MPI_DOUBLE, NULL, 0, MPI_DOUBLE, 0, MPI_COMM_WORLD);			
+				time += MPI_Wtime();	
+			} else {
+				MPI_Barrier(MPI_COMM_WORLD);
+				time -= MPI_Wtime();
+				MPI_Gatherv(i_result, delta, MPI_DOUBLE, NULL, NULL, NULL, MPI_DOUBLE, 0, MPI_COMM_WORLD);			
+				time += MPI_Wtime();	
+			}			
 		}
 		delete array_A;
 		delete tmp_A;
@@ -88,23 +108,29 @@ int main(int argc, char* argv[])//A, b, c
 		std::fseek(b, first * sizeof(double) + shift, SEEK_SET);
 		std::fread(array_b, sizeof (double), delta, b);	
 		std::fclose(b);
-		time -= MPI_Wtime();
 		double* i_result = new double [lines];
 		for (std::size_t i = 0; i < lines; ++i) {
 			i_result[i] = 0;
 		}
+		time -= MPI_Wtime();
 		for (std::size_t i = 0; i < lines; ++i) {
 			for (std::size_t j = 0; j < delta; ++j) {
 				i_result[i] += array_A[i][j] * array_b[j];
 			}
 		}
-		time -= MPI_Wtime();
-		if(!rank) {
+		time += MPI_Wtime();
+		if (!rank) {
+			MPI_Barrier(MPI_COMM_WORLD);
+			time -= MPI_Wtime();
 			MPI_Reduce(MPI_IN_PLACE, i_result, lines, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+			time += MPI_Wtime();
 		} else {
+			MPI_Barrier(MPI_COMM_WORLD);
+			time -= MPI_Wtime();
 			MPI_Reduce(i_result, NULL, lines, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);	
+			time += MPI_Wtime();
 		}		
-		if(!rank) {
+		if (!rank) {
 			std::FILE* c = std::fopen(argv[3], "wb");
 			std::fwrite(&type, sizeof type, 1, c);
 			std::size_t tmp_size = lines;
@@ -119,13 +145,15 @@ int main(int argc, char* argv[])//A, b, c
 		delete array_b;
 		delete i_result;
 	}
-
-	if(!rank) {
+	if (!rank) {
 		double max, sum;
 		MPI_Reduce(&time, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 		MPI_Reduce(&time, &max, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-		std::cout.precision(6);
-		std::cout << size << std::endl << "lines - " << lines  << "\t" << "columns - " << columns << std::endl << "sum - " << sum << std::endl << "max - " << max << std::endl;
+		std::ofstream out ("OUT", std::ios::app);
+		out 	<< size << std::endl 
+			<< "lines - " << lines << "\t" << "columns - " << columns << std::endl 
+			<< "sum - " << sum << std::endl 
+			<< "max - " << max << std::endl;
 	} else {
 		MPI_Reduce(&time, NULL, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 		MPI_Reduce(&time, NULL, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
@@ -133,3 +161,4 @@ int main(int argc, char* argv[])//A, b, c
 	MPI_Finalize();
 	return 0;
 }
+
