@@ -12,4 +12,4 @@ gen: create.cpp
 run:
 	mpisubmit.bg -n 64 --stderr err --stdout out main a b c 
 clean:
-	rm -rf main print gen compare *.dat *.data
+	rm -rf main print gen compare *.dat *.data OUT A b c
