@@ -2,7 +2,7 @@
 #include <fstream>
 #include <ctime>
 //нормальная версия этой программы в другом таске
-void gen_array(const std::size_t N, const std::size_t M, const char type, const std::string& file_name) {
+void gen_array(const std::size_t N, const std::size_t M, const char type, const char* file_name) {
 	std::ofstream outfile (file_name, std::ofstream::binary);
 	outfile.write((char*)& type, sizeof type);
 	outfile.write((char*)& N, sizeof N);
