@@ -73,15 +73,15 @@ void *run(void *params)
     ret -> counter = counter;
     ret -> time = elapsed;
     //double* ret_value = new double (elapsed);
-    pthread_exit(ret);
-}
+.}
 
 int main(int argc, char* argv[])
 {
     std::cout.precision(9);
     int num_threads = std::atoi(argv[4]),
         number_of_prime_num_before_sqrt,
-        l_border = std::atoi(argv[1]),
+        //l_border = std::atoi(argv[1]),
+        sscanf(argv[1], "%d", &l_border);
         r_border = std::atoi(argv[2]);
     std::string file_name = argv[3];
     pthread_t* threads = new pthread_t [num_threads];
